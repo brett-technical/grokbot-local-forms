@@ -1,50 +1,52 @@
 # grokbot-local-forms
 
-Local HTML forms for [Grok Bot](https://grok.com) that save answers on your computer and notify the requesting bot when you hit Submit.
+Instructions for an assistant setting up local HTML forms for [Grok Bot](https://grok.com).
 
-This is a small template you can copy. Forms stay private on your machine. Submit is the only action you take: answers are written as markdown and JSON, then a webhook wakes the Grok Bot assistant named in the form.
+These forms stay on the person's computer. Submit saves answers as a markdown note and a matching JSON record, then notifies the Grok Bot assistant named in `target_bot`. Do the mechanical steps yourself. Ask the person only when a value is hidden from you or you need a preference you cannot infer.
 
-## The one step you have to do yourself
+## What you can do
 
-Almost everything else is automatic. The form can open on your computer, Submit saves your answers, and the requesting Grok Bot gets pinged.
+- Clone this repository onto their computer (or copy the files they already have).
+- Copy `webhook.local.json.example` to `webhook.local.json` in the repository root if that file does not exist.
+- Create a webhook routine on their Grok Bot assistant if they do not already have one (a name like "Form submission handoff" is fine).
+- Start `python example-form/server.py` and open `http://127.0.0.1:8765/` in their browser.
+- Build new forms by copying `example-form/`, changing the questions, the `form` id, and `target_bot`.
+- After webhook config exists, treat Submit as automatic: save files and ping the requesting bot. Do not ask them to go tell the other bot that the form is in.
 
-Grok Bot hides the webhook key from assistants on purpose, so the bot cannot fill this in for you.
+## What you must ask the person
 
-Once, you (or your assistant) open `webhook.local.json` on your computer. If that file does not exist yet, copy it from `webhook.local.json.example`.
+1. Webhook URL and key. Grok Bot does not show webhook keys to assistants, so you cannot fill `webhook.local.json` yourself. Open that file on their computer. Ask them to copy the routine's **Webhook URL** and **Webhook key** into it and save. Tell them not to paste the key into chat. They do not need the Authorization header; the server already sends `Authorization: Bearer` plus the key. This is one time. Do not repeat it for every form.
+2. Where to save submissions, if it matters. Answers are ordinary files. If they use [Obsidian](https://obsidian.md), ask which vault folder to use (a `Forms` folder works well) and set `FORMS_DIR` there. If they do not use Obsidian, do not require it. Use the default `example-form/submissions` folder, or any local folder they prefer. If they want Obsidian and do not have it, point them to https://obsidian.md.
 
-In Grok Bot, open your webhook routine and copy the **Webhook URL** and **Webhook key** into that file. You do not need the Authorization header. The server already sends `Authorization: Bearer` plus the key.
+Never commit `webhook.local.json`. Never log or quote the key.
 
-Do not paste the key into chat. Do not commit `webhook.local.json`.
+## How submissions are stored
 
-After you save that file, every later Submit is automatic. You do not repeat this for each form.
+Each Submit writes two files that share a timestamped stem, for example:
 
-## How it works
+- `2026-11-09-003140-example-form.md` — readable log for the person (Obsidian or any text editor)
+- `2026-11-09-003140-example-form.json` — the same answers as structured fields
 
-1. A tiny server on your computer hosts the form at `http://127.0.0.1:8765/`.
-2. When you click Submit, the server saves a markdown note and a JSON record to a folder you choose (an Obsidian vault folder works well).
-3. The same Submit request posts that record to a Grok Bot webhook routine.
-4. The routine messages the assistant named in `target_bot` so they can continue without you going back to tell them the form is in.
+Markdown is for reading. JSON is easier for an agent to parse without guessing at headings or formatting. The webhook also posts that JSON to the requesting bot at Submit time. The on-disk `.json` is a spare copy if a ping fails or something rereads the folder later.
 
-Nothing is uploaded to a public host. The server listens only on localhost.
-
-## One-time setup
+## Setup
 
 1. Clone this repository.
 2. Copy `webhook.local.json.example` to `webhook.local.json` in the repository root.
-3. In Grok Bot, create a webhook routine (a name like “Form submission handoff” is fine).
-4. Copy the routine’s **Webhook URL** and **Webhook key** into `webhook.local.json`. Do not paste the key into chat, and do not commit this file.
-5. Set `FORMS_DIR` to the folder where submissions should be saved, or accept the default `submissions/` directory next to the example form.
-6. Start the example form:
+3. Create or open their Grok Bot webhook routine.
+4. Open `webhook.local.json` on their computer and have them paste the Webhook URL and Webhook key, then save.
+5. Set `FORMS_DIR` only if they chose a folder; otherwise keep the default.
+6. Run:
 
 ```bash
 python example-form/server.py
 ```
 
-7. Open [http://127.0.0.1:8765/](http://127.0.0.1:8765/) in your browser.
+7. Open http://127.0.0.1:8765/ for them.
 
-After that, every Submit uses the same URL and key. You do not repeat the webhook setup for each form.
+The server rereads `webhook.local.json` on every Submit, so they can save the file without a restart. If they edit it in Notepad on Windows, a hidden byte-order mark may be added; the server reads UTF-8 with BOM, so that still works.
 
-If you edit `webhook.local.json` in Notepad on Windows, it may save a hidden byte-order mark at the start of the file. The server reads the file as UTF-8 with BOM, so that will not break the ping.
+The server listens only on localhost. Nothing is uploaded to a public host.
 
 ## webhook.local.json
 
@@ -55,13 +57,11 @@ If you edit `webhook.local.json` in Notepad on Windows, it may save a hidden byt
 }
 ```
 
-The server sends `Authorization: Bearer <key>` and `Content-Type: application/json`. You do not need to store the header separately.
-
-Keep `webhook.local.json` out of git. `.gitignore` already lists it.
+`.gitignore` already excludes this file.
 
 ## Form payload
 
-`POST /submit` with a JSON body. The example form sends:
+`POST /submit` with JSON. The example form sends:
 
 ```json
 {
@@ -73,28 +73,22 @@ Keep `webhook.local.json` out of git. `.gitignore` already lists it.
 }
 ```
 
-`target_bot` should be the exact Grok Bot assistant name that asked for the form. The server adds timestamps and the saved file paths, writes markdown plus JSON, then posts the full record to the webhook.
+`target_bot` must be the exact Grok Bot assistant name that asked for the form. The server adds timestamps and file paths, writes markdown plus JSON, then posts the full record to the webhook.
 
 Suggested webhook routine behavior:
 
 - Read the JSON body.
 - Message the Grok Bot assistant named in `target_bot` with the answers and file paths.
-- If `target_bot` is missing, tell the user in chat instead of guessing.
-- If `target_bot` is the bot that owns the routine, just confirm the submission in that chat.
+- If `target_bot` is missing, tell the person in chat instead of guessing.
+- If `target_bot` is the assistant that owns the routine, confirm the submission in that chat.
 
 ## Configuration
 
 | Setting | Default | Purpose |
 | --- | --- | --- |
 | `FORMS_DIR` | `example-form/submissions` | Where markdown and JSON logs are written |
-| `FORM_HOST` | `127.0.0.1` | Bind address (localhost only by default) |
+| `FORM_HOST` | `127.0.0.1` | Bind address (localhost only) |
 | `FORM_PORT` | `8765` | Local port |
-
-The webhook file is read from `webhook.local.json` in the repository root on every Submit, so you can fill it in without restarting the server.
-
-## Make your own form
-
-Copy `example-form/` and change the questions, the `form` id, and `target_bot`. Keep posting JSON to `/submit`. Point each real interview form at the assistant that requested it, not at a generic name.
 
 ## Requirements
 
