@@ -14,8 +14,8 @@
       --line: rgba(0, 0, 0, 0.08);
       --accent: #1d1d1f;
       --accent-text: #f5f5f7;
-      --badge: #fff3cd;
-      --badge-text: #6b5400;
+      --badge: #e8e8ed;
+      --badge-text: #6e6e73;
     }
     @media (prefers-color-scheme: dark) {
       :root {
@@ -26,8 +26,8 @@
         --line: rgba(255, 255, 255, 0.12);
         --accent: #f5f5f7;
         --accent-text: #1d1d1f;
-        --badge: #3d3410;
-        --badge-text: #f5e6a6;
+        --badge: #2c2c2e;
+        --badge-text: #a1a1a6;
       }
     }
     * { box-sizing: border-box; }
@@ -38,13 +38,13 @@
       background: var(--bg);
       color: var(--text);
       display: flex;
-      align-items: center;
+      align-items: flex-start;
       justify-content: center;
       padding: 48px 24px;
     }
     main {
       width: 100%;
-      max-width: 560px;
+      max-width: 640px;
       background: var(--paper);
       border: 1px solid var(--line);
       border-radius: 20px;
@@ -75,16 +75,44 @@
       font-size: 17px;
       line-height: 1.45;
     }
-    label {
+    .question {
+      margin: 0 0 32px;
+      padding-top: 8px;
+      border-top: 1px solid var(--line);
+    }
+    .question:first-of-type { border-top: 0; padding-top: 0; }
+    .q-label {
       display: block;
-      font-size: 15px;
-      font-weight: 500;
-      margin: 0 0 10px;
+      font-size: 16px;
+      font-weight: 600;
+      margin: 0 0 14px;
       line-height: 1.4;
+    }
+    .choices { display: grid; gap: 8px; margin: 0 0 16px; }
+    .choice {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      margin: 0;
+      padding: 12px 14px;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      font-size: 15px;
+      font-weight: 400;
+      line-height: 1.4;
+      cursor: pointer;
+    }
+    .choice input { margin-top: 3px; accent-color: var(--text); }
+    .other-label {
+      display: block;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--muted);
+      margin: 0 0 8px;
     }
     textarea {
       width: 100%;
-      min-height: 140px;
+      min-height: 88px;
       resize: vertical;
       border: 1px solid var(--line);
       border-radius: 12px;
@@ -99,7 +127,7 @@
     button {
       appearance: none;
       border: 0;
-      margin-top: 24px;
+      margin-top: 8px;
       width: 100%;
       height: 48px;
       border-radius: 12px;
@@ -118,36 +146,74 @@
       line-height: 1.4;
     }
     .hidden { display: none; }
-    #done h1 { margin-bottom: 12px; }
+    #status { color: var(--text); margin-top: 16px; }
     #error { color: #c43c31; margin-top: 16px; }
   </style>
 </head>
 <body>
-  <main id="form-view">
-    <p class="badge">Example form</p>
-    <h1>A quick test</h1>
-    <p class="lede">This example saves your answer on this computer and pings the Grok Bot assistant named in the form.</p>
+  <main>
+    <p class="badge">Example</p>
+    <h1>Example form</h1>
+    <p class="lede">Copy this form when you build a new one. Replace the questions, options, form id, and <code>target_bot</code> with values from the requesting bot. Every question should offer suggestions and a write-in box.</p>
     <form id="example-form">
-      <label for="answer">If you could add one button to every TV remote, what would it do?</label>
-      <textarea id="answer" name="answer" required placeholder="Skip intro, extra volume, a nap timer..."></textarea>
+      <section class="question">
+        <p class="q-label">Which of these should this example remember? Pick any that apply.</p>
+        <div class="choices">
+          <label class="choice"><input type="checkbox" name="q1" value="Suggested choices"> <span>Suggested choices</span></label>
+          <label class="choice"><input type="checkbox" name="q1" value="A write-in box on every question"> <span>A write-in box on every question</span></label>
+          <label class="choice"><input type="checkbox" name="q1" value="Saving answers on this computer"> <span>Saving answers on this computer</span></label>
+          <label class="choice"><input type="checkbox" name="q1" value="Notifying the requesting bot"> <span>Notifying the requesting bot</span></label>
+        </div>
+        <label class="other-label" for="q1-other">Or write your own answer</label>
+        <textarea id="q1-other" placeholder="Anything to add, or a different answer..."></textarea>
+      </section>
+      <section class="question">
+        <p class="q-label">If you could pick only one next step, what would it be?</p>
+        <div class="choices">
+          <label class="choice"><input type="radio" name="q2" value="Copy this form and change the questions"> <span>Copy this form and change the questions</span></label>
+          <label class="choice"><input type="radio" name="q2" value="Set target_bot to the requesting assistant"> <span>Set target_bot to the requesting assistant</span></label>
+          <label class="choice"><input type="radio" name="q2" value="Open the form in the browser for the person"> <span>Open the form in the browser for the person</span></label>
+        </div>
+        <label class="other-label" for="q2-other">Or write your own answer</label>
+        <textarea id="q2-other" placeholder="Anything to add, or a different answer..."></textarea>
+      </section>
       <button type="submit" id="submit">Submit</button>
-      <p class="note">Your answer stays on this computer. Submit also notifies the requesting bot.</p>
+      <p class="note">Answers stay on this computer. Submit saves them and notifies the requesting bot. You can change answers and submit again.</p>
+      <p id="status" class="hidden"></p>
       <p id="error" class="hidden"></p>
     </form>
   </main>
-  <main id="done" class="hidden">
-    <p class="badge">Example form</p>
-    <h1>Got it</h1>
-    <p class="lede">Your answer was saved. You can close this tab — the requesting bot should hear about it automatically.</p>
-  </main>
   <script>
+    const QUESTIONS = [
+      { name: "q1", text: "Which of these should this example remember? Pick any that apply." },
+      { name: "q2", text: "If you could pick only one next step, what would it be?" }
+    ];
+
     const form = document.getElementById("example-form");
     const button = document.getElementById("submit");
+    const status = document.getElementById("status");
     const error = document.getElementById("error");
-    const question = "If you could add one button to every TV remote, what would it do?";
+
+    function collectQuestions() {
+      return QUESTIONS.map((item) => {
+        const selected = [...document.querySelectorAll('input[name="' + item.name + '"]:checked')]
+          .map((input) => input.value);
+        const other = document.getElementById(item.name + "-other").value.trim();
+        return { id: item.name, question: item.text, selected, other };
+      });
+    }
+
     form.addEventListener("submit", async (event) => {
       event.preventDefault();
       error.classList.add("hidden");
+      status.classList.add("hidden");
+      const questions = collectQuestions();
+      const answered = questions.filter((item) => item.selected.length || item.other);
+      if (!answered.length) {
+        error.textContent = "Choose at least one suggestion or write something in a text box.";
+        error.classList.remove("hidden");
+        return;
+      }
       button.disabled = true;
       button.textContent = "Submitting…";
       try {
@@ -158,20 +224,20 @@
             form: "example-form",
             is_test: true,
             title: "Example form response",
-            question,
-            answer: document.getElementById("answer").value.trim(),
-            target_bot: "Web Apps"
+            target_bot: "Requesting Bot",
+            questions
           })
         });
         if (!response.ok) {
           const detail = await response.text();
           throw new Error(detail || "Submit failed");
         }
-        document.getElementById("form-view").classList.add("hidden");
-        document.getElementById("done").classList.remove("hidden");
+        status.textContent = "Saved. You can change anything and submit again.";
+        status.classList.remove("hidden");
       } catch (err) {
         error.textContent = err.message || "Submit failed.";
         error.classList.remove("hidden");
+      } finally {
         button.disabled = false;
         button.textContent = "Submit";
       }
