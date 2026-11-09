@@ -4,7 +4,6 @@
 
 > [!TIP]
 > **Automate with your agent.**
-> Copy this prompt into your AI agent:
 >
 > ```
 > Read this README: https://github.com/brett-technical/grokbot-local-forms
