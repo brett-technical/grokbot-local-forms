@@ -4,6 +4,20 @@ Local HTML forms for [Grok Bot](https://grok.com) that save answers on your comp
 
 This is a small template you can copy. Forms stay private on your machine. Submit is the only action you take: answers are written as markdown and JSON, then a webhook wakes the Grok Bot assistant named in the form.
 
+## The one step you have to do yourself
+
+Almost everything else is automatic. The form can open on your computer, Submit saves your answers, and the requesting Grok Bot gets pinged.
+
+Grok Bot hides the webhook key from assistants on purpose, so the bot cannot fill this in for you.
+
+Once, you (or your assistant) open `webhook.local.json` on your computer. If that file does not exist yet, copy it from `webhook.local.json.example`.
+
+In Grok Bot, open your webhook routine and copy the **Webhook URL** and **Webhook key** into that file. You do not need the Authorization header. The server already sends `Authorization: Bearer` plus the key.
+
+Do not paste the key into chat. Do not commit `webhook.local.json`.
+
+After you save that file, every later Submit is automatic. You do not repeat this for each form.
+
 ## How it works
 
 1. A tiny server on your computer hosts the form at `http://127.0.0.1:8765/`.
