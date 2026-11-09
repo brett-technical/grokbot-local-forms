@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Example Form</title>
+  <style>
+    :root {
+      color-scheme: light dark;
+      --bg: #f5f5f7;
+      --paper: #ffffff;
+      --text: #1d1d1f;
+      --muted: #6e6e73;
+      --line: rgba(0, 0, 0, 0.08);
+      --accent: #1d1d1f;
+      --accent-text: #f5f5f7;
+      --badge: #fff3cd;
+      --badge-text: #6b5400;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #000000;
+        --paper: #1c1c1e;
+        --text: #f5f5f7;
+        --muted: #a1a1a6;
+        --line: rgba(255, 255, 255, 0.12);
+        --accent: #f5f5f7;
+        --accent-text: #1d1d1f;
+        --badge: #3d3410;
+        --badge-text: #f5e6a6;
+      }
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 48px 24px;
+    }
+    main {
+      width: 100%;
+      max-width: 560px;
+      background: var(--paper);
+      border: 1px solid var(--line);
+      border-radius: 20px;
+      padding: 40px 36px 36px;
+    }
+    .badge {
+      display: inline-block;
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      background: var(--badge);
+      color: var(--badge-text);
+      border-radius: 999px;
+      padding: 5px 10px;
+      margin: 0 0 20px;
+    }
+    h1 {
+      margin: 0 0 8px;
+      font-size: 32px;
+      font-weight: 600;
+      letter-spacing: -0.035em;
+      line-height: 1.15;
+    }
+    .lede {
+      margin: 0 0 32px;
+      color: var(--muted);
+      font-size: 17px;
+      line-height: 1.45;
+    }
+    label {
+      display: block;
+      font-size: 15px;
+      font-weight: 500;
+      margin: 0 0 10px;
+      line-height: 1.4;
+    }
+    textarea {
+      width: 100%;
+      min-height: 140px;
+      resize: vertical;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 14px 16px;
+      font: inherit;
+      font-size: 16px;
+      color: var(--text);
+      background: transparent;
+      outline: none;
+    }
+    textarea:focus { border-color: var(--text); }
+    button {
+      appearance: none;
+      border: 0;
+      margin-top: 24px;
+      width: 100%;
+      height: 48px;
+      border-radius: 12px;
+      background: var(--accent);
+      color: var(--accent-text);
+      font: inherit;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    button:disabled { opacity: 0.55; cursor: default; }
+    .note {
+      margin: 16px 0 0;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.4;
+    }
+    .hidden { display: none; }
+    #done h1 { margin-bottom: 12px; }
+    #error { color: #c43c31; margin-top: 16px; }
+  </style>
+</head>
+<body>
+  <main id="form-view">
+    <p class="badge">Example form</p>
+    <h1>A quick test</h1>
+    <p class="lede">This example saves your answer on this computer and pings the Grok Bot assistant named in the form.</p>
+    <form id="example-form">
+      <label for="answer">If you could add one button to every TV remote, what would it do?</label>
+      <textarea id="answer" name="answer" required placeholder="Skip intro, extra volume, a nap timer..."></textarea>
+      <button type="submit" id="submit">Submit</button>
+      <p class="note">Your answer stays on this computer. Submit also notifies the requesting bot.</p>
+      <p id="error" class="hidden"></p>
+    </form>
+  </main>
+  <main id="done" class="hidden">
+    <p class="badge">Example form</p>
+    <h1>Got it</h1>
+    <p class="lede">Your answer was saved. You can close this tab — the requesting bot should hear about it automatically.</p>
+  </main>
+  <script>
+    const form = document.getElementById("example-form");
+    const button = document.getElementById("submit");
+    const error = document.getElementById("error");
+    const question = "If you could add one button to every TV remote, what would it do?";
+    form.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      error.classList.add("hidden");
+      button.disabled = true;
+      button.textContent = "Submitting…";
+      try {
+        const response = await fetch("/submit", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            form: "example-form",
+            is_test: true,
+            title: "Example form response",
+            question,
+            answer: document.getElementById("answer").value.trim(),
+            target_bot: "Web Apps"
+          })
+        });
+        if (!response.ok) {
+          const detail = await response.text();
+          throw new Error(detail || "Submit failed");
+        }
+        document.getElementById("form-view").classList.add("hidden");
+        document.getElementById("done").classList.remove("hidden");
+      } catch (err) {
+        error.textContent = err.message || "Submit failed.";
+        error.classList.remove("hidden");
+        button.disabled = false;
+        button.textContent = "Submit";
+      }
+    });
+  </script>
+</body>
+</html>
