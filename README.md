@@ -2,6 +2,10 @@
 
 ![Ask better. Build better. Simple forms that capture the vision behind your ask.](assets/banner.png)
 
+> [!TIP]
+> **Automate with your agent.**
+> Paste this repo's link into your AI agent and prompt: *"Read this README. Incorporate this process into our current workflow."*
+
 Local HTML forms for [Grok Bot](https://grok.com). Answers stay on the person's computer. Submit writes a markdown note plus matching JSON, then notifies the assistant named in `target_bot`.
 
 ## What it is
