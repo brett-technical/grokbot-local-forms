@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+"""Generic local form server. Renders from form.json; never edit per form."""
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from datetime import datetime
 from pathlib import Path
@@ -10,13 +11,13 @@ import threading
 import time
 
 ROOT = Path(__file__).resolve().parent
-REPO_ROOT = ROOT.parent
 FORMS_DIR = Path(os.environ.get("FORMS_DIR") or (ROOT / "submissions"))
-WEBHOOK_CONFIG = REPO_ROOT / "webhook.local.json"
+WEBHOOK_CONFIG = ROOT.parent / "webhook.local.json"
 HOST = os.environ.get("FORM_HOST") or "127.0.0.1"
 PREFERRED_PORT = int(os.environ.get("FORM_PORT") or "8765")
 IDLE_SECONDS = int(os.environ.get("FORM_IDLE_SECONDS") or "3600")
 PORT_ATTEMPTS = 50
+DISABLE_WEBHOOK = os.environ.get("FORM_DISABLE_WEBHOOK", "").strip().lower() in ("1", "true", "yes")
 
 _activity_lock = threading.Lock()
 _last_activity = time.monotonic()
@@ -31,6 +32,27 @@ def touch_activity():
     global _last_activity
     with _activity_lock:
         _last_activity = time.monotonic()
+
+
+def load_form_meta():
+    path = ROOT / "form.json"
+    meta = {"id": ROOT.name, "title": ROOT.name, "target_bot": "Web Apps", "requested_by": None}
+    if not path.exists():
+        return meta
+    try:
+        data = json.loads(path.read_text(encoding="utf-8-sig"))
+    except json.JSONDecodeError:
+        return meta
+    if isinstance(data, dict):
+        if data.get("id"):
+            meta["id"] = safe_stem(data["id"])
+        if data.get("title"):
+            meta["title"] = str(data["title"]).strip() or meta["title"]
+        if data.get("target_bot"):
+            meta["target_bot"] = str(data["target_bot"]).strip() or meta["target_bot"]
+        if data.get("requested_by"):
+            meta["requested_by"] = str(data["requested_by"]).strip() or None
+    return meta
 
 
 def collect_questions(payload):
@@ -72,6 +94,8 @@ def format_answer(item):
 
 
 def notify_requesting_bot(record):
+    if DISABLE_WEBHOOK:
+        return {"notified": False, "reason": "webhook_disabled"}
     if not WEBHOOK_CONFIG.exists():
         return {"notified": False, "reason": "missing_webhook_config"}
     try:
@@ -110,17 +134,29 @@ class Handler(BaseHTTPRequestHandler):
     def log_message(self, fmt, *args):
         print("[%s] %s" % (self.log_date_time_string(), fmt % args))
 
+    def _send_bytes(self, data, content_type):
+        self.send_response(200)
+        self.send_header("Content-Type", content_type)
+        self.send_header("Content-Length", str(len(data)))
+        self.send_header("Cache-Control", "no-store")
+        self.end_headers()
+        self.wfile.write(data)
+
     def do_GET(self):
-        if self.path.split("?", 1)[0] in ("/", "/index.html"):
+        path = self.path.split("?", 1)[0]
+        if path in ("/", "/index.html"):
             touch_activity()
-            path = ROOT / "index.html"
-            data = path.read_bytes()
-            self.send_response(200)
-            self.send_header("Content-Type", "text/html; charset=utf-8")
-            self.send_header("Content-Length", str(len(data)))
-            self.send_header("Cache-Control", "no-store")
-            self.end_headers()
-            self.wfile.write(data)
+            data = (ROOT / "index.html").read_bytes()
+            self._send_bytes(data, "text/html; charset=utf-8")
+            return
+        if path == "/form.json":
+            touch_activity()
+            form_path = ROOT / "form.json"
+            if not form_path.exists():
+                self.send_error(404, "form.json missing")
+                return
+            data = form_path.read_bytes()
+            self._send_bytes(data, "application/json; charset=utf-8")
             return
         self.send_error(404)
 
@@ -142,18 +178,19 @@ class Handler(BaseHTTPRequestHandler):
             self.send_error(400, "At least one answer is required")
             return
 
+        meta = load_form_meta()
         now = datetime.now().astimezone()
         created = now.strftime("%Y-%m-%d")
         submitted = now.isoformat(timespec="seconds")
         stamp = now.strftime("%Y-%m-%d-%H%M%S")
-        form_id = safe_stem(payload.get("form") or "example-form")
+        form_id = safe_stem(payload.get("form") or meta["id"])
         stem = stamp + "-" + form_id
         FORMS_DIR.mkdir(parents=True, exist_ok=True)
 
         markdown_path = FORMS_DIR / (stem + ".md")
         json_path = FORMS_DIR / (stem + ".json")
-        target_bot = str(payload.get("target_bot") or "").strip()
-        title = str(payload.get("title") or "Form response")
+        target_bot = str(payload.get("target_bot") or meta["target_bot"]).strip() or meta["target_bot"]
+        title = str(payload.get("title") or meta["title"])
 
         record = {
             "form": form_id,
@@ -170,6 +207,8 @@ class Handler(BaseHTTPRequestHandler):
             "markdown_path": str(markdown_path),
             "json_path": str(json_path),
         }
+        if meta.get("requested_by"):
+            record["requested_by"] = meta["requested_by"]
 
         markdown_lines = [
             "---",
@@ -179,12 +218,16 @@ class Handler(BaseHTTPRequestHandler):
             "form: " + form_id,
             "status: " + ("test" if record["is_test"] else "submitted"),
             "target_bot: " + target_bot,
+        ]
+        if meta.get("requested_by"):
+            markdown_lines.append("requested_by: " + meta["requested_by"])
+        markdown_lines.extend([
             "form_path: " + ROOT.as_posix(),
             "---",
             "",
             "# " + title,
             "",
-        ]
+        ])
         for item in questions:
             markdown_lines.extend(["## " + item["question"], "", format_answer(item), ""])
 
@@ -240,20 +283,24 @@ def idle_watch(server, idle_seconds):
 
 
 if __name__ == "__main__":
+    meta = load_form_meta()
     server, port = bind_server(HOST, PREFERRED_PORT)
-    print("Form at http://%s:%s/" % (HOST, port))
+    print("Form at http://%s:%s/" % (HOST, port), flush=True)
     if port != PREFERRED_PORT:
-        print("Port %s was in use; using %s" % (PREFERRED_PORT, port))
-    print("Saving submissions to %s" % FORMS_DIR)
-    print("Webhook config at %s" % WEBHOOK_CONFIG)
+        print("Port %s was in use; using %s" % (PREFERRED_PORT, port), flush=True)
+    print("Form id: %s" % meta["id"], flush=True)
+    print("Saving submissions to %s" % FORMS_DIR, flush=True)
+    print("Webhook config at %s" % WEBHOOK_CONFIG, flush=True)
+    if DISABLE_WEBHOOK:
+        print("Webhook: disabled via FORM_DISABLE_WEBHOOK", flush=True)
     if IDLE_SECONDS > 0:
-        print("Idle timeout: %s seconds" % IDLE_SECONDS)
+        print("Idle timeout: %s seconds" % IDLE_SECONDS, flush=True)
         watcher = threading.Thread(
             target=idle_watch, args=(server, IDLE_SECONDS), daemon=True
         )
         watcher.start()
     else:
-        print("Idle timeout: disabled")
+        print("Idle timeout: disabled", flush=True)
     try:
         server.serve_forever()
     finally:

@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Example Form</title>
+  <title>Form</title>
   <style>
     :root {
       color-scheme: light dark;
@@ -16,6 +16,9 @@
       --accent-text: #f5f5f7;
       --badge: #e8e8ed;
       --badge-text: #6e6e73;
+      --link: #0071e3;
+      --tag: #e8e8ed;
+      --tag-text: #6e6e73;
     }
     @media (prefers-color-scheme: dark) {
       :root {
@@ -28,6 +31,9 @@
         --accent-text: #1d1d1f;
         --badge: #2c2c2e;
         --badge-text: #a1a1a6;
+        --link: #2997ff;
+        --tag: #2c2c2e;
+        --tag-text: #a1a1a6;
       }
     }
     * { box-sizing: border-box; }
@@ -40,16 +46,22 @@
       display: flex;
       align-items: flex-start;
       justify-content: center;
-      padding: 48px 24px;
+      padding: 48px 24px 80px;
     }
     main {
       width: 100%;
-      max-width: 640px;
+      max-width: 680px;
       background: var(--paper);
       border: 1px solid var(--line);
       border-radius: 20px;
       padding: 40px 36px 36px;
     }
+    .dictation {
+      display: flex; align-items: flex-start; gap: 8px;
+      margin: -12px 0 28px; font-size: 13px; line-height: 1.45; color: var(--muted);
+    }
+    .dictation .tip-label { flex: none; font-weight: 600; margin-right: -2px; }
+    .dictation svg { flex: none; width: 14px; height: 14px; margin-top: 2px; opacity: .8; }
     .badge {
       display: inline-block;
       font-size: 12px;
@@ -75,20 +87,122 @@
       font-size: 17px;
       line-height: 1.45;
     }
-    .question {
-      margin: 0 0 32px;
-      padding-top: 8px;
+    .section {
+      margin: 0 0 28px;
+      padding-top: 24px;
       border-top: 1px solid var(--line);
     }
-    .question:first-of-type { border-top: 0; padding-top: 0; }
-    .q-label {
-      display: block;
-      font-size: 16px;
+    .section:first-of-type { border-top: 0; padding-top: 0; }
+    .section-title {
+      margin: 0 0 6px;
+      font-size: 20px;
       font-weight: 600;
-      margin: 0 0 14px;
+      letter-spacing: -0.02em;
+    }
+    .section-note {
+      margin: 0 0 16px;
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.45;
+    }
+    .links {
+      display: grid;
+      gap: 10px;
+      margin: 0 0 18px;
+    }
+    .link-card {
+      display: block;
+      padding: 12px 14px;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      text-decoration: none;
+      color: inherit;
+      transition: border-color 0.12s ease;
+    }
+    .link-card:hover { border-color: var(--text); }
+    .link-top {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 4px;
+    }
+    .link-label {
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--link);
+      line-height: 1.3;
+    }
+    .link-tag {
+      flex-shrink: 0;
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      background: var(--tag);
+      color: var(--tag-text);
+      border-radius: 999px;
+      padding: 3px 8px;
+    }
+    .link-note {
+      margin: 0;
+      color: var(--muted);
+      font-size: 13px;
       line-height: 1.4;
     }
-    .choices { display: grid; gap: 8px; margin: 0 0 16px; }
+
+    .group-heading {
+      margin: 28px 0 12px;
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+    .group-heading:first-child { margin-top: 0; }
+    .rating-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin: 0 0 12px;
+    }
+    .rating-choice {
+      flex: 1 1 0;
+      min-width: 44px;
+      max-width: 64px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0;
+      padding: 12px 0;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      text-align: center;
+      user-select: none;
+    }
+    .rating-choice input {
+      position: absolute;
+      opacity: 0;
+      pointer-events: none;
+    }
+    .rating-choice:has(input:checked) {
+      border-color: var(--text);
+      background: var(--accent);
+      color: var(--accent-text);
+    }
+    .rating-choice:hover { border-color: var(--text); }
+    .question { margin: 0 0 18px; }
+    .q-label {
+      display: block;
+      font-size: 15px;
+      font-weight: 600;
+      margin: 0 0 12px;
+      line-height: 1.4;
+    }
+    .choices { display: grid; gap: 8px; margin: 0 0 12px; }
     .choice {
       display: flex;
       align-items: flex-start;
@@ -112,7 +226,7 @@
     }
     textarea {
       width: 100%;
-      min-height: 88px;
+      min-height: 110px;
       resize: vertical;
       border: 1px solid var(--line);
       border-radius: 12px;
@@ -123,6 +237,7 @@
       background: transparent;
       outline: none;
     }
+    textarea.short { min-height: 88px; }
     textarea:focus { border-color: var(--text); }
     button {
       appearance: none;
@@ -148,69 +263,187 @@
     .hidden { display: none; }
     #status { color: var(--text); margin-top: 16px; }
     #error { color: #c43c31; margin-top: 16px; }
+    #loading {
+      color: var(--muted);
+      font-size: 15px;
+      margin: 0;
+    }
   </style>
 </head>
 <body>
   <main>
-    <p class="badge">Example</p>
-    <h1>Example form</h1>
-    <p class="lede">Copy this form when you build a new one. Replace the questions, options, form id, and <code>target_bot</code> with values from the requesting bot. Every question should offer suggestions and a write-in box.</p>
-    <form id="example-form">
-      <section class="question">
-        <p class="q-label">Which of these should this example remember? Pick any that apply.</p>
-        <div class="choices">
-          <label class="choice"><input type="checkbox" name="q1" value="Suggested choices"> <span>Suggested choices</span></label>
-          <label class="choice"><input type="checkbox" name="q1" value="A write-in box on every question"> <span>A write-in box on every question</span></label>
-          <label class="choice"><input type="checkbox" name="q1" value="Saving answers on this computer"> <span>Saving answers on this computer</span></label>
-          <label class="choice"><input type="checkbox" name="q1" value="Notifying the requesting bot"> <span>Notifying the requesting bot</span></label>
-        </div>
-        <label class="other-label" for="q1-other">Or write your own answer</label>
-        <textarea id="q1-other" placeholder="Anything to add, or a different answer..."></textarea>
-      </section>
-      <section class="question">
-        <p class="q-label">If you could pick only one next step, what would it be?</p>
-        <div class="choices">
-          <label class="choice"><input type="radio" name="q2" value="Copy this form and change the questions"> <span>Copy this form and change the questions</span></label>
-          <label class="choice"><input type="radio" name="q2" value="Set target_bot to the requesting assistant"> <span>Set target_bot to the requesting assistant</span></label>
-          <label class="choice"><input type="radio" name="q2" value="Open the form in the browser for the person"> <span>Open the form in the browser for the person</span></label>
-        </div>
-        <label class="other-label" for="q2-other">Or write your own answer</label>
-        <textarea id="q2-other" placeholder="Anything to add, or a different answer..."></textarea>
-      </section>
-      <button type="submit" id="submit">Submit</button>
-      <p class="note">Answers stay on this computer. Submit saves them and notifies the requesting bot. You can change answers and submit again.</p>
-      <p id="status" class="hidden"></p>
-      <p id="error" class="hidden"></p>
-    </form>
+    <p id="loading">Loading form…</p>
+    <div id="app" class="hidden">
+      <p class="badge" id="requester">Interview</p>
+      <h1 id="title"></h1>
+      <p class="lede" id="intro"></p>
+      <p class="dictation"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 10a7 7 0 0 0 14 0"/><path d="M12 17v5"/></svg><span class="tip-label">Tip:</span><span>Ramble freely and speak your answers!<br>Dictation captures more of what you mean, and more detail gives your agent better context.</span></p>
+      <form id="form">
+        <div id="sections"></div>
+        <button type="submit" id="submit">Submit</button>
+        <p class="note" id="footer-note">Your answers stay on this computer. Submit saves them and notifies the target bot. You can edit and submit again.</p>
+        <p id="status" class="hidden"></p>
+        <p id="error" class="hidden"></p>
+      </form>
+    </div>
   </main>
   <script>
-    const QUESTIONS = [
-      { name: "q1", text: "Which of these should this example remember? Pick any that apply." },
-      { name: "q2", text: "If you could pick only one next step, what would it be?" }
-    ];
-
-    const form = document.getElementById("example-form");
+    const loading = document.getElementById("loading");
+    const app = document.getElementById("app");
+    const sectionsEl = document.getElementById("sections");
+    const formEl = document.getElementById("form");
     const button = document.getElementById("submit");
     const status = document.getElementById("status");
     const error = document.getElementById("error");
+    let formMeta = null;
+    let questionDefs = [];
+
+    function esc(text) {
+      return String(text ?? "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;");
+    }
+
+    function renderLink(link) {
+      const tag = link.tag
+        ? '<span class="link-tag">' + esc(link.tag) + "</span>"
+        : "";
+      const note = link.note
+        ? '<p class="link-note">' + esc(link.note) + "</p>"
+        : "";
+      return (
+        '<a class="link-card" href="' + esc(link.url) + '" target="_blank" rel="noopener noreferrer">' +
+          '<div class="link-top">' +
+            '<span class="link-label">' + esc(link.label || link.url) + "</span>" +
+            tag +
+          "</div>" +
+          note +
+        "</a>"
+      );
+    }
+
+    function renderQuestion(q, sectionId) {
+      const qid = String(q.id || sectionId + "-q");
+      const options = Array.isArray(q.options) ? q.options : [];
+      const multi = !!q.multi;
+      // write_in:false hides the box even for open-ended (rare); default true when omitted.
+      // Open-ended (no options) always gets a textarea unless write_in is explicitly false.
+      const writeInExplicit = Object.prototype.hasOwnProperty.call(q, "write_in");
+      const writeIn = writeInExplicit ? !!q.write_in : true;
+      const showWriteIn = options.length ? writeIn : (writeInExplicit ? writeIn : true);
+      const presentation = String(q.presentation || q.style || "").toLowerCase();
+      const isRating = presentation === "rating" || (
+        !multi && options.length >= 2 && options.length <= 7 &&
+        options.every((opt) => /^\d+$/.test(String(typeof opt === "string" ? opt : (opt.value || opt.label || ""))))
+      );
+      const placeholder = q.placeholder || (options.length ? "Your own wording, or more detail…" : "Your thoughts…");
+      let html = '<div class="question" data-qid="' + esc(qid) + '">';
+      html += '<p class="q-label">' + esc(q.prompt || "") + "</p>";
+      if (options.length) {
+        if (isRating) {
+          html += '<div class="rating-row" role="radiogroup" aria-label="' + esc(q.prompt || "Rating") + '">';
+          options.forEach((opt) => {
+            const value = typeof opt === "string" ? opt : (opt.label || opt.value || "");
+            html +=
+              '<label class="rating-choice"><input type="radio" name="' + esc(qid) + '" value="' + esc(value) + '">' +
+              '<span>' + esc(value) + "</span></label>";
+          });
+          html += "</div>";
+        } else {
+          html += '<div class="choices">';
+          options.forEach((opt, i) => {
+            const type = multi ? "checkbox" : "radio";
+            const name = multi ? qid + "-" + i : qid;
+            const value = typeof opt === "string" ? opt : (opt.label || opt.value || "");
+            html +=
+              '<label class="choice"><input type="' + type + '" name="' + esc(name) + '" value="' + esc(value) + '"' +
+              (multi ? ' data-group="' + esc(qid) + '"' : "") +
+              '> <span>' + esc(value) + "</span></label>";
+          });
+          html += "</div>";
+        }
+      }
+      if (showWriteIn) {
+        if (options.length) {
+          html += '<label class="other-label" for="' + esc(qid) + '-other">Or write your own answer</label>';
+        }
+        const cls = options.length ? "short" : "";
+        html +=
+          '<textarea id="' + esc(qid) + '-other" class="' + cls + '" placeholder="' + esc(placeholder) + '"></textarea>';
+      }
+      html += "</div>";
+      questionDefs.push({
+        id: qid,
+        prompt: q.prompt || "",
+        multi,
+        hasOptions: options.length > 0,
+        writeIn: showWriteIn,
+      });
+      return html;
+    }
+
+    function renderSection(section) {
+      let html = '<section class="section">';
+      html += '<h2 class="section-title">' + esc(section.title || "") + "</h2>";
+      if (section.note) {
+        html += '<p class="section-note">' + esc(section.note) + "</p>";
+      }
+      const links = Array.isArray(section.links) ? section.links : [];
+      if (links.length) {
+        html += '<div class="links">' + links.map(renderLink).join("") + "</div>";
+      }
+      const questions = Array.isArray(section.questions) ? section.questions : [];
+      questions.forEach((q) => {
+        html += renderQuestion(q, section.id || "section");
+      });
+      html += "</section>";
+      return html;
+    }
+
+    function renderSections(sections) {
+      let html = "";
+      let lastGroup = null;
+      sections.forEach((section) => {
+        const group = section.group ? String(section.group) : "";
+        if (group && group !== lastGroup) {
+          html += '<p class="group-heading">' + esc(group) + "</p>";
+          lastGroup = group;
+        } else if (!group) {
+          lastGroup = null;
+        }
+        html += renderSection(section);
+      });
+      return html;
+    }
 
     function collectQuestions() {
-      return QUESTIONS.map((item) => {
-        const selected = [...document.querySelectorAll('input[name="' + item.name + '"]:checked')]
-          .map((input) => input.value);
-        const other = document.getElementById(item.name + "-other").value.trim();
-        return { id: item.name, question: item.text, selected, other };
+      return questionDefs.map((item) => {
+        let selected = [];
+        if (item.hasOptions) {
+          if (item.multi) {
+            selected = [...document.querySelectorAll('input[data-group="' + item.id + '"]:checked')]
+              .map((input) => input.value);
+          } else {
+            selected = [...document.querySelectorAll('input[name="' + item.id + '"]:checked')]
+              .map((input) => input.value);
+          }
+        }
+        const otherEl = document.getElementById(item.id + "-other");
+        const other = otherEl ? otherEl.value.trim() : "";
+        return { id: item.id, question: item.prompt, selected, other };
       });
     }
 
-    form.addEventListener("submit", async (event) => {
+    formEl.addEventListener("submit", async (event) => {
       event.preventDefault();
       error.classList.add("hidden");
       status.classList.add("hidden");
       const questions = collectQuestions();
       const answered = questions.filter((item) => item.selected.length || item.other);
       if (!answered.length) {
-        error.textContent = "Choose at least one suggestion or write something in a text box.";
+        error.textContent = "Write something in at least one section before submitting.";
         error.classList.remove("hidden");
         return;
       }
@@ -221,10 +454,10 @@
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            form: "example-form",
-            is_test: true,
-            title: "Example form response",
-            target_bot: "Requesting Bot",
+            form: formMeta.id,
+            is_test: false,
+            title: formMeta.title,
+            target_bot: formMeta.target_bot,
             questions
           })
         });
@@ -242,6 +475,39 @@
         button.textContent = "Submit";
       }
     });
+
+    fetch("/form.json")
+      .then((r) => {
+        if (!r.ok) throw new Error("Could not load form.json");
+        return r.json();
+      })
+      .then((data) => {
+        formMeta = {
+          id: data.id || "form",
+          title: data.title || "Form",
+          target_bot: data.target_bot || "Web Apps",
+          intro: data.intro || ""
+        };
+        document.title = formMeta.title;
+        document.getElementById("title").textContent = formMeta.title;
+        document.getElementById("intro").textContent = formMeta.intro;
+        const requester = data.requested_by || formMeta.target_bot;
+        document.getElementById("requester").textContent =
+          requester === formMeta.target_bot
+            ? "From " + requester + " \u00b7 your answers go back to " + requester
+            : "From " + requester + " \u00b7 your answers go to " + formMeta.target_bot;
+        document.getElementById("footer-note").textContent =
+          "Your answers stay on this computer. Submit saves them and notifies " +
+          formMeta.target_bot +
+          ". You can edit and submit again.";
+        const sections = Array.isArray(data.sections) ? data.sections : [];
+        sectionsEl.innerHTML = renderSections(sections);
+        loading.classList.add("hidden");
+        app.classList.remove("hidden");
+      })
+      .catch((err) => {
+        loading.textContent = err.message || "Failed to load form.";
+      });
   </script>
 </body>
 </html>

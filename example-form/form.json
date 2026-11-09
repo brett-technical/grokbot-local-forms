@@ -1,0 +1,38 @@
+{
+  "id": "example-form",
+  "title": "Example form",
+  "intro": "A short sample. Copy this folder and replace form.json for a real form. Agents should write only form.json.",
+  "target_bot": "Web Apps",
+  "requested_by": "Web Apps",
+  "sections": [
+    {
+      "id": "example",
+      "title": "Example section",
+      "note": "Links, notes, and questions all come from form.json.",
+      "links": [
+        {
+          "label": "21st.dev components",
+          "url": "https://21st.dev",
+          "note": "Optional reference link. Opens in a new tab.",
+          "tag": "reference"
+        }
+      ],
+      "questions": [
+        {
+          "id": "example-thoughts",
+          "prompt": "What should this example remember?",
+          "options": ["Suggested choices", "Write-in answers", "Both"],
+          "multi": true,
+          "write_in": true,
+          "placeholder": "Your own wording, or more detail…"
+        },
+        {
+          "id": "example-open",
+          "prompt": "Anything else to capture?",
+          "write_in": true,
+          "placeholder": "Optional notes…"
+        }
+      ]
+    }
+  ]
+}
